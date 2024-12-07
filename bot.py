@@ -38,5 +38,7 @@ async def main():
 if __name__ == '__main__':
     import asyncio
 
-    # Simply run the main function within the existing event loop
-    asyncio.run(main())
+    # Instead of asyncio.run, use the event loop provided by Koyeb
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()

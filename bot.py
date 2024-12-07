@@ -1,28 +1,42 @@
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
-from flask import Flask, request
-import os
+from decouple import config
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 
-app = Flask(__name__)
+BOT_API_KEY = config("BOT_API")
 
-BOT_API_KEY = os.getenv("BOT_API_KEY")  # Set this as an environment variable
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Get the message_id passed in the URL (after "start=")
+    if context.args:
+        channel_2_msg_id = context.args[0]  # This will be the message_id of the post in Channel 2
 
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Hello, I am your bot!")
+        # Construct the link to the post in Channel 2
+        post_url = f'https://t.me/newtest020/{channel_2_msg_id}'
 
-def handle_update(request):
-    updater = Updater(BOT_API_KEY, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
+        # Create the button to redirect to Channel 2's post
+        keyboard = [
+            [InlineKeyboardButton("Go to Channel 2 Post", url=post_url)]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
-    json_str = request.get_json(force=True)
-    update = Update.de_json(json_str, updater.bot)
-    dp.process_update(update)
+        # Send message with the button
+        await update.message.reply_text('Click to go to the post in Channel 2:', reply_markup=reply_markup)
+    else:
+        # In case no message_id is provided, reply with a default message
+        await update.message.reply_text("No message ID provided!")
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    handle_update(request)
-    return 'OK'
+async def main():
+    # Set up the Application and Dispatcher (new method)
+    application = Application.builder().token(BOT_API_KEY).build()
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    # Add handler for the /start command (which takes parameters)
+    application.add_handler(CommandHandler("start", start))
+
+    # Start polling for updates
+    await application.run_polling()
+
+# Run the main function directly without manually handling the event loop
+if __name__ == '__main__':
+    import asyncio
+
+    # Simply run the main function within the existing event loop
+    asyncio.run(main())

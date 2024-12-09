@@ -1,3 +1,3 @@
 python-telegram-bot==13.11
-nest_asyncio
-telethon
+telethon==1.24.0
+nest-asyncio==1.5.6
